@@ -43,7 +43,7 @@ const paginate = (schema) => {
           populateOption
             .split('.')
             .reverse()
-            .reduce((a, b) => ({ path: b, populate: a })),
+            .reduce((a, b) => ({ path: b, populate: a }))
         );
       });
     }
@@ -58,7 +58,7 @@ const paginate = (schema) => {
         page,
         limit,
         totalPages,
-        totalResults,
+        totalResults
       };
       return Promise.resolve(result);
     });

@@ -6,7 +6,7 @@ const prettierRecommended = require('eslint-plugin-prettier/recommended');
 
 module.exports = [
   {
-    ignores: ['bin/**', 'coverage/**', 'node_modules/**'],
+    ignores: ['bin/**', 'coverage/**', 'node_modules/**']
   },
   js.configs.recommended,
   {
@@ -16,23 +16,24 @@ module.exports = [
       sourceType: 'commonjs',
       globals: {
         ...globals.node,
-        ...globals.jest,
-      },
+        ...globals.jest
+      }
     },
     plugins: {
       jest,
-      security,
+      security
     },
     rules: {
       ...jest.configs.recommended.rules,
       ...security.configs.recommended.rules,
-      'no-console': 'error',
+      'comma-dangle': ['error', 'never'],
+      'no-console': ['error', { allow: ['error'] }],
       'func-names': 'off',
       'no-underscore-dangle': 'off',
       'consistent-return': 'off',
       'jest/expect-expect': 'off',
-      'security/detect-object-injection': 'off',
-    },
+      'security/detect-object-injection': 'off'
+    }
   },
-  prettierRecommended,
+  prettierRecommended
 ];

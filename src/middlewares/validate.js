@@ -23,7 +23,7 @@ const validate = (schema) => (req, res, next) => {
         value: value.query,
         writable: false,
         configurable: true,
-        enumerable: true,
+        enumerable: true
       });
     } else {
       req[key] = value[key];

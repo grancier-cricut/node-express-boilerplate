@@ -9,7 +9,7 @@ const userSchema = mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
+      trim: true
     },
     email: {
       type: String,
@@ -21,7 +21,7 @@ const userSchema = mongoose.Schema(
         if (!validator.isEmail(value)) {
           throw new Error('Invalid email');
         }
-      },
+      }
     },
     password: {
       type: String,
@@ -33,21 +33,21 @@ const userSchema = mongoose.Schema(
           throw new Error('Password must contain at least one letter and one number');
         }
       },
-      private: true, // used by the toJSON plugin
+      private: true // used by the toJSON plugin
     },
     role: {
       type: String,
       enum: roles,
-      default: 'user',
+      default: 'user'
     },
     isEmailVerified: {
       type: Boolean,
-      default: false,
-    },
+      default: false
+    }
   },
   {
-    timestamps: true,
-  },
+    timestamps: true
+  }
 );
 
 // add plugin that converts mongoose to json
@@ -75,10 +75,20 @@ userSchema.methods.isPasswordMatch = async function (password) {
   return bcrypt.compare(password, user.password);
 };
 
-userSchema.pre('save', async function () {
+userSchema.pre('save', async function (next) {
   const user = this;
-  if (user.isModified('password')) {
-    user.password = await bcrypt.hash(user.password, 8);
+
+  if (!user.isModified('password')) {
+    if (typeof next === 'function') {
+      next();
+    }
+    return;
+  }
+
+  user.password = await bcrypt.hash(user.password, 8);
+
+  if (typeof next === 'function') {
+    next();
   }
 });
 

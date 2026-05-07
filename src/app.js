@@ -27,7 +27,7 @@ const sanitizeMongoRequest = (req, res, next) => {
     value: mongoSanitize.sanitize(req.query),
     writable: false,
     configurable: true,
-    enumerable: true,
+    enumerable: true
   });
 
   next();

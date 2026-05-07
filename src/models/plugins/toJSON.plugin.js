@@ -34,7 +34,7 @@ const toJSON = (schema) => {
       if (transform) {
         return transform(doc, ret, options);
       }
-    },
+    }
   });
 };
 

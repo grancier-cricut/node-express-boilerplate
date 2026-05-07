@@ -7,9 +7,9 @@ const nextSequence = () => {
 
 module.exports = {
   person: {
-    fullName: () => `Test User ${nextSequence()}`,
+    fullName: () => `Test User ${nextSequence()}`
   },
   internet: {
-    email: () => `test.user.${nextSequence()}@example.com`,
-  },
+    email: () => `test.user.${nextSequence()}@example.com`
+  }
 };
