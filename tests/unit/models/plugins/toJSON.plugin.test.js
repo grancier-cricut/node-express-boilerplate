@@ -74,11 +74,10 @@ describe('toJSON plugin', () => {
       {
         toJSON: {
           transform: (doc, ret) => {
-            // eslint-disable-next-line no-param-reassign
             delete ret.private;
           },
         },
-      }
+      },
     );
     schema.plugin(toJSON);
     const Model = connection.model('Model', schema);

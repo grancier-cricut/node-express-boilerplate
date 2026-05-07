@@ -1,11 +1,11 @@
 const express = require('express');
 const helmet = require('helmet');
-const xss = require('xss-clean');
+const { xss } = require('express-xss-sanitizer');
 const mongoSanitize = require('express-mongo-sanitize');
 const compression = require('compression');
 const cors = require('cors');
 const passport = require('passport');
-const httpStatus = require('http-status');
+const { status: httpStatus } = require('http-status');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
 const { jwtStrategy } = require('./config/passport');
@@ -15,6 +15,23 @@ const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
 
 const app = express();
+
+const sanitizeMongoRequest = (req, res, next) => {
+  ['body', 'params', 'headers'].forEach((key) => {
+    if (req[key]) {
+      req[key] = mongoSanitize.sanitize(req[key]);
+    }
+  });
+
+  Object.defineProperty(req, 'query', {
+    value: mongoSanitize.sanitize(req.query),
+    writable: false,
+    configurable: true,
+    enumerable: true,
+  });
+
+  next();
+};
 
 if (config.env !== 'test') {
   app.use(morgan.successHandler);
@@ -32,14 +49,14 @@ app.use(express.urlencoded({ extended: true }));
 
 // sanitize request data
 app.use(xss());
-app.use(mongoSanitize());
+app.use(sanitizeMongoRequest);
 
 // gzip compression
 app.use(compression());
 
 // enable cors
 app.use(cors());
-app.options('*', cors());
+app.options('/{*path}', cors());
 
 // jwt authentication
 app.use(passport.initialize());
