@@ -77,6 +77,7 @@ userSchema.methods.isPasswordMatch = async function (password) {
   return bcrypt.compare(password, user.password);
 };
 
+// Keep the next callback guard because newer Mongoose versions do not always pass it to async hooks.
 userSchema.pre('save', async function (next) {
   const user = this;
 

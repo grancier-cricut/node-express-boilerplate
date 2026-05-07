@@ -23,6 +23,7 @@ const sanitizeMongoRequest = (req, res, next) => {
     }
   });
 
+  // Express 5 exposes req.query through an accessor, so replace it with the sanitized value.
   Object.defineProperty(req, 'query', {
     value: mongoSanitize.sanitize(req.query),
     writable: false,

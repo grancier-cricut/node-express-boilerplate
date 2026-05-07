@@ -8,6 +8,7 @@ const Token = require('../models/token.model');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
 
+// Keep failed logins on the same bcrypt path whether or not the email exists.
 const DUMMY_PASSWORD_HASH = '$2b$08$xtC4iNnM7a2UJ5j6PcJV/.COrgvhLbdcXIINjNRXXvSZUaOSOeh82';
 
 const logAuthError = (context, error) => {
@@ -59,6 +60,7 @@ const refreshAuth = async (refreshToken) => {
     if (!user) {
       throw new Error();
     }
+    // Rotate refresh tokens so a token cannot be replayed after it has been used.
     await refreshTokenDoc.deleteOne();
     return tokenService.generateAuthTokens(user);
   } catch (error) {

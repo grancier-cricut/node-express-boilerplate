@@ -60,6 +60,7 @@ const verifyToken = async (token, type) => {
   if (!tokenDoc) {
     throw new Error('Token not found');
   }
+  // The signed exp claim and persisted expiry must both remain valid.
   if (moment(tokenDoc.expires).isBefore(moment())) {
     throw new Error('Token expired');
   }
@@ -77,6 +78,7 @@ const generateAuthTokens = async (user) => {
 
   const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
   const refreshToken = generateToken(user.id, refreshTokenExpires, tokenTypes.REFRESH);
+  // Only long-lived tokens are stored so they can be revoked; access tokens stay stateless.
   await saveToken(refreshToken, user.id, refreshTokenExpires, tokenTypes.REFRESH);
 
   return {
