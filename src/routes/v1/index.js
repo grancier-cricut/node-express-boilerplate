@@ -9,20 +9,20 @@ const router = express.Router();
 const defaultRoutes = [
   {
     path: '/auth',
-    route: authRoute,
+    route: authRoute
   },
   {
     path: '/users',
-    route: userRoute,
-  },
+    route: userRoute
+  }
 ];
 
 const devRoutes = [
   // routes available only in development mode
   {
     path: '/docs',
-    route: docsRoute,
-  },
+    route: docsRoute
+  }
 ];
 
 defaultRoutes.forEach((route) => {

@@ -1,6 +1,6 @@
 const request = require('supertest');
-const faker = require('faker');
-const httpStatus = require('http-status');
+const faker = require('../fixtures/faker');
+const { status: httpStatus } = require('http-status');
 const app = require('../../src/app');
 const setupTestDB = require('../utils/setupTestDB');
 const { User } = require('../../src/models');
@@ -15,10 +15,10 @@ describe('User routes', () => {
 
     beforeEach(() => {
       newUser = {
-        name: faker.name.findName(),
+        name: faker.person.fullName(),
         email: faker.internet.email().toLowerCase(),
         password: 'password1',
-        role: 'user',
+        role: 'user'
       };
     });
 
@@ -37,7 +37,7 @@ describe('User routes', () => {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
-        isEmailVerified: false,
+        isEmailVerified: false
       });
 
       const dbUser = await User.findById(res.body.id);
@@ -155,7 +155,7 @@ describe('User routes', () => {
         page: 1,
         limit: 10,
         totalPages: 1,
-        totalResults: 3,
+        totalResults: 3
       });
       expect(res.body.results).toHaveLength(3);
       expect(res.body.results[0]).toEqual({
@@ -163,7 +163,7 @@ describe('User routes', () => {
         name: userOne.name,
         email: userOne.email,
         role: userOne.role,
-        isEmailVerified: userOne.isEmailVerified,
+        isEmailVerified: userOne.isEmailVerified
       });
     });
 
@@ -198,7 +198,7 @@ describe('User routes', () => {
         page: 1,
         limit: 10,
         totalPages: 1,
-        totalResults: 1,
+        totalResults: 1
       });
       expect(res.body.results).toHaveLength(1);
       expect(res.body.results[0].id).toBe(userOne._id.toHexString());
@@ -219,7 +219,7 @@ describe('User routes', () => {
         page: 1,
         limit: 10,
         totalPages: 1,
-        totalResults: 2,
+        totalResults: 2
       });
       expect(res.body.results).toHaveLength(2);
       expect(res.body.results[0].id).toBe(userOne._id.toHexString());
@@ -241,7 +241,7 @@ describe('User routes', () => {
         page: 1,
         limit: 10,
         totalPages: 1,
-        totalResults: 3,
+        totalResults: 3
       });
       expect(res.body.results).toHaveLength(3);
       expect(res.body.results[0].id).toBe(userOne._id.toHexString());
@@ -264,7 +264,7 @@ describe('User routes', () => {
         page: 1,
         limit: 10,
         totalPages: 1,
-        totalResults: 3,
+        totalResults: 3
       });
       expect(res.body.results).toHaveLength(3);
       expect(res.body.results[0].id).toBe(admin._id.toHexString());
@@ -287,7 +287,7 @@ describe('User routes', () => {
         page: 1,
         limit: 10,
         totalPages: 1,
-        totalResults: 3,
+        totalResults: 3
       });
       expect(res.body.results).toHaveLength(3);
 
@@ -321,7 +321,7 @@ describe('User routes', () => {
         page: 1,
         limit: 2,
         totalPages: 2,
-        totalResults: 3,
+        totalResults: 3
       });
       expect(res.body.results).toHaveLength(2);
       expect(res.body.results[0].id).toBe(userOne._id.toHexString());
@@ -343,7 +343,7 @@ describe('User routes', () => {
         page: 2,
         limit: 2,
         totalPages: 2,
-        totalResults: 3,
+        totalResults: 3
       });
       expect(res.body.results).toHaveLength(1);
       expect(res.body.results[0].id).toBe(admin._id.toHexString());
@@ -366,7 +366,7 @@ describe('User routes', () => {
         email: userOne.email,
         name: userOne.name,
         role: userOne.role,
-        isEmailVerified: userOne.isEmailVerified,
+        isEmailVerified: userOne.isEmailVerified
       });
     });
 
@@ -482,9 +482,9 @@ describe('User routes', () => {
     test('should return 200 and successfully update user if data is ok', async () => {
       await insertUsers([userOne]);
       const updateBody = {
-        name: faker.name.findName(),
+        name: faker.person.fullName(),
         email: faker.internet.email().toLowerCase(),
-        password: 'newPassword1',
+        password: 'newPassword1'
       };
 
       const res = await request(app)
@@ -499,7 +499,7 @@ describe('User routes', () => {
         name: updateBody.name,
         email: updateBody.email,
         role: 'user',
-        isEmailVerified: false,
+        isEmailVerified: false
       });
 
       const dbUser = await User.findById(userOne._id);
@@ -510,14 +510,14 @@ describe('User routes', () => {
 
     test('should return 401 error if access token is missing', async () => {
       await insertUsers([userOne]);
-      const updateBody = { name: faker.name.findName() };
+      const updateBody = { name: faker.person.fullName() };
 
       await request(app).patch(`/v1/users/${userOne._id}`).send(updateBody).expect(httpStatus.UNAUTHORIZED);
     });
 
     test('should return 403 if user is updating another user', async () => {
       await insertUsers([userOne, userTwo]);
-      const updateBody = { name: faker.name.findName() };
+      const updateBody = { name: faker.person.fullName() };
 
       await request(app)
         .patch(`/v1/users/${userTwo._id}`)
@@ -528,7 +528,7 @@ describe('User routes', () => {
 
     test('should return 200 and successfully update user if admin is updating another user', async () => {
       await insertUsers([userOne, admin]);
-      const updateBody = { name: faker.name.findName() };
+      const updateBody = { name: faker.person.fullName() };
 
       await request(app)
         .patch(`/v1/users/${userOne._id}`)
@@ -539,7 +539,7 @@ describe('User routes', () => {
 
     test('should return 404 if admin is updating another user that is not found', async () => {
       await insertUsers([admin]);
-      const updateBody = { name: faker.name.findName() };
+      const updateBody = { name: faker.person.fullName() };
 
       await request(app)
         .patch(`/v1/users/${userOne._id}`)
@@ -550,7 +550,7 @@ describe('User routes', () => {
 
     test('should return 400 error if userId is not a valid mongo id', async () => {
       await insertUsers([admin]);
-      const updateBody = { name: faker.name.findName() };
+      const updateBody = { name: faker.person.fullName() };
 
       await request(app)
         .patch(`/v1/users/invalidId`)

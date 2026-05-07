@@ -1,4 +1,4 @@
-const faker = require('faker');
+const faker = require('../../fixtures/faker');
 const { User } = require('../../../src/models');
 
 describe('User model', () => {
@@ -6,10 +6,10 @@ describe('User model', () => {
     let newUser;
     beforeEach(() => {
       newUser = {
-        name: faker.name.findName(),
+        name: faker.person.fullName(),
         email: faker.internet.email().toLowerCase(),
         password: 'password1',
-        role: 'user',
+        role: 'user'
       };
     });
 
@@ -46,10 +46,10 @@ describe('User model', () => {
   describe('User toJSON()', () => {
     test('should not return user password when toJSON is called', () => {
       const newUser = {
-        name: faker.name.findName(),
+        name: faker.person.fullName(),
         email: faker.internet.email().toLowerCase(),
         password: 'password1',
-        role: 'user',
+        role: 'user'
       };
       expect(new User(newUser).toJSON()).not.toHaveProperty('password');
     });

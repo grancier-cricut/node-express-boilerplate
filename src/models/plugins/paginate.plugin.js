@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 const paginate = (schema) => {
   /**
    * @typedef {Object} QueryResult
@@ -20,7 +18,7 @@ const paginate = (schema) => {
    * @returns {Promise<QueryResult>}
    */
   schema.statics.paginate = async function (filter, options) {
-    let sort = '';
+    let sort;
     if (options.sortBy) {
       const sortingCriteria = [];
       options.sortBy.split(',').forEach((sortOption) => {
@@ -60,7 +58,7 @@ const paginate = (schema) => {
         page,
         limit,
         totalPages,
-        totalResults,
+        totalResults
       };
       return Promise.resolve(result);
     });

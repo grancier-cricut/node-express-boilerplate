@@ -59,5 +59,5 @@ module.exports = {
   transport,
   sendEmail,
   sendResetPasswordEmail,
-  sendVerificationEmail,
+  sendVerificationEmail
 };

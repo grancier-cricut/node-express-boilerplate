@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
-const httpStatus = require('http-status');
+const { status: httpStatus } = require('http-status');
 const config = require('../config/config');
 const userService = require('./user.service');
 const { Token } = require('../models');
@@ -20,7 +20,7 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
     sub: userId,
     iat: moment().unix(),
     exp: expires.unix(),
-    type,
+    type
   };
   return jwt.sign(payload, secret);
 };
@@ -40,7 +40,7 @@ const saveToken = async (token, userId, expires, type, blacklisted = false) => {
     user: userId,
     expires: expires.toDate(),
     type,
-    blacklisted,
+    blacklisted
   });
   return tokenDoc;
 };
@@ -76,12 +76,12 @@ const generateAuthTokens = async (user) => {
   return {
     access: {
       token: accessToken,
-      expires: accessTokenExpires.toDate(),
+      expires: accessTokenExpires.toDate()
     },
     refresh: {
       token: refreshToken,
-      expires: refreshTokenExpires.toDate(),
-    },
+      expires: refreshTokenExpires.toDate()
+    }
   };
 };
 
@@ -119,5 +119,5 @@ module.exports = {
   verifyToken,
   generateAuthTokens,
   generateResetPasswordToken,
-  generateVerifyEmailToken,
+  generateVerifyEmailToken
 };

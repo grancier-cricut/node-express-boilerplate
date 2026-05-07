@@ -1,4 +1,4 @@
-const httpStatus = require('http-status');
+const { status: httpStatus } = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const { authService, userService, tokenService, emailService } = require('../services');
 
@@ -55,5 +55,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   sendVerificationEmail,
-  verifyEmail,
+  verifyEmail
 };

@@ -1,6 +1,6 @@
 const request = require('supertest');
-const faker = require('faker');
-const httpStatus = require('http-status');
+const faker = require('../fixtures/faker');
+const { status: httpStatus } = require('http-status');
 const httpMocks = require('node-mocks-http');
 const moment = require('moment');
 const bcrypt = require('bcryptjs');
@@ -23,9 +23,9 @@ describe('Auth routes', () => {
     let newUser;
     beforeEach(() => {
       newUser = {
-        name: faker.name.findName(),
+        name: faker.person.fullName(),
         email: faker.internet.email().toLowerCase(),
-        password: 'password1',
+        password: 'password1'
       };
     });
 
@@ -38,7 +38,7 @@ describe('Auth routes', () => {
         name: newUser.name,
         email: newUser.email,
         role: 'user',
-        isEmailVerified: false,
+        isEmailVerified: false
       });
 
       const dbUser = await User.findById(res.body.user.id);
@@ -48,7 +48,7 @@ describe('Auth routes', () => {
 
       expect(res.body.tokens).toEqual({
         access: { token: expect.anything(), expires: expect.anything() },
-        refresh: { token: expect.anything(), expires: expect.anything() },
+        refresh: { token: expect.anything(), expires: expect.anything() }
       });
     });
 
@@ -87,7 +87,7 @@ describe('Auth routes', () => {
       await insertUsers([userOne]);
       const loginCredentials = {
         email: userOne.email,
-        password: userOne.password,
+        password: userOne.password
       };
 
       const res = await request(app).post('/v1/auth/login').send(loginCredentials).expect(httpStatus.OK);
@@ -97,19 +97,19 @@ describe('Auth routes', () => {
         name: userOne.name,
         email: userOne.email,
         role: userOne.role,
-        isEmailVerified: userOne.isEmailVerified,
+        isEmailVerified: userOne.isEmailVerified
       });
 
       expect(res.body.tokens).toEqual({
         access: { token: expect.anything(), expires: expect.anything() },
-        refresh: { token: expect.anything(), expires: expect.anything() },
+        refresh: { token: expect.anything(), expires: expect.anything() }
       });
     });
 
     test('should return 401 error if there are no users with that email', async () => {
       const loginCredentials = {
         email: userOne.email,
-        password: userOne.password,
+        password: userOne.password
       };
 
       const res = await request(app).post('/v1/auth/login').send(loginCredentials).expect(httpStatus.UNAUTHORIZED);
@@ -121,7 +121,7 @@ describe('Auth routes', () => {
       await insertUsers([userOne]);
       const loginCredentials = {
         email: userOne.email,
-        password: 'wrongPassword1',
+        password: 'wrongPassword1'
       };
 
       const res = await request(app).post('/v1/auth/login').send(loginCredentials).expect(httpStatus.UNAUTHORIZED);
@@ -176,7 +176,7 @@ describe('Auth routes', () => {
 
       expect(res.body).toEqual({
         access: { token: expect.anything(), expires: expect.anything() },
-        refresh: { token: expect.anything(), expires: expect.anything() },
+        refresh: { token: expect.anything(), expires: expect.anything() }
       });
 
       const dbRefreshTokenDoc = await Token.findOne({ token: res.body.refresh.token });
@@ -402,7 +402,7 @@ describe('Auth routes', () => {
 
       const dbVerifyEmailToken = await Token.countDocuments({
         user: userOne._id,
-        type: tokenTypes.VERIFY_EMAIL,
+        type: tokenTypes.VERIFY_EMAIL
       });
       expect(dbVerifyEmailToken).toBe(0);
     });
@@ -563,7 +563,7 @@ describe('Auth middleware', () => {
     await insertUsers([userOne]);
     const req = httpMocks.createRequest({
       headers: { Authorization: `Bearer ${userOneAccessToken}` },
-      params: { userId: userOne._id.toHexString() },
+      params: { userId: userOne._id.toHexString() }
     });
     const next = jest.fn();
 
@@ -576,7 +576,7 @@ describe('Auth middleware', () => {
     await insertUsers([admin]);
     const req = httpMocks.createRequest({
       headers: { Authorization: `Bearer ${adminAccessToken}` },
-      params: { userId: userOne._id.toHexString() },
+      params: { userId: userOne._id.toHexString() }
     });
     const next = jest.fn();
 
