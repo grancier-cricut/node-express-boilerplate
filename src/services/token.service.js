@@ -22,7 +22,7 @@ const generateToken = (userId, expires, type, secret = config.jwt.secret) => {
     exp: expires.unix(),
     type
   };
-  return jwt.sign(payload, secret);
+  return jwt.sign(payload, secret, { algorithm: 'HS256' });
 };
 
 /**
@@ -52,10 +52,16 @@ const saveToken = async (token, userId, expires, type, blacklisted = false) => {
  * @returns {Promise<Token>}
  */
 const verifyToken = async (token, type) => {
-  const payload = jwt.verify(token, config.jwt.secret);
+  const payload = jwt.verify(token, config.jwt.secret, { algorithms: ['HS256'] });
+  if (!payload.sub || payload.type !== type) {
+    throw new Error('Invalid token type');
+  }
   const tokenDoc = await Token.findOne({ token, type, user: payload.sub, blacklisted: false });
   if (!tokenDoc) {
     throw new Error('Token not found');
+  }
+  if (moment(tokenDoc.expires).isBefore(moment())) {
+    throw new Error('Token expired');
   }
   return tokenDoc;
 };

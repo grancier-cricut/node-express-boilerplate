@@ -5,12 +5,13 @@ const { User } = require('../models');
 
 const jwtOptions = {
   secretOrKey: config.jwt.secret,
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  algorithms: ['HS256']
 };
 
 const jwtVerify = async (payload, done) => {
   try {
-    if (payload.type !== tokenTypes.ACCESS) {
+    if (!payload.sub || payload.type !== tokenTypes.ACCESS) {
       throw new Error('Invalid token type');
     }
     const user = await User.findById(payload.sub);

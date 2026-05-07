@@ -98,6 +98,17 @@ describe('User routes', () => {
         .expect(httpStatus.BAD_REQUEST);
     });
 
+    test('should return 400 error if email is already used with different casing', async () => {
+      await insertUsers([admin, userOne]);
+      newUser.email = userOne.email.toUpperCase();
+
+      await request(app)
+        .post('/v1/users')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send(newUser)
+        .expect(httpStatus.BAD_REQUEST);
+    });
+
     test('should return 400 error if password length is less than 8 characters', async () => {
       await insertUsers([admin]);
       newUser.password = 'passwo1';
@@ -581,6 +592,17 @@ describe('User routes', () => {
         .expect(httpStatus.BAD_REQUEST);
     });
 
+    test('should return 400 if email is already taken with different casing', async () => {
+      await insertUsers([userOne, userTwo]);
+      const updateBody = { email: userTwo.email.toUpperCase() };
+
+      await request(app)
+        .patch(`/v1/users/${userOne._id}`)
+        .set('Authorization', `Bearer ${userOneAccessToken}`)
+        .send(updateBody)
+        .expect(httpStatus.BAD_REQUEST);
+    });
+
     test('should not return 400 if email is my email', async () => {
       await insertUsers([userOne]);
       const updateBody = { email: userOne.email };
@@ -590,6 +612,19 @@ describe('User routes', () => {
         .set('Authorization', `Bearer ${userOneAccessToken}`)
         .send(updateBody)
         .expect(httpStatus.OK);
+    });
+
+    test('should not return 400 if email is my email with different casing', async () => {
+      await insertUsers([userOne]);
+      const updateBody = { email: userOne.email.toUpperCase() };
+
+      const res = await request(app)
+        .patch(`/v1/users/${userOne._id}`)
+        .set('Authorization', `Bearer ${userOneAccessToken}`)
+        .send(updateBody)
+        .expect(httpStatus.OK);
+
+      expect(res.body.email).toBe(userOne.email);
     });
 
     test('should return 400 if password length is less than 8 characters', async () => {
