@@ -2,6 +2,7 @@ const request = require('supertest');
 const faker = require('../fixtures/faker');
 const { status: httpStatus } = require('http-status');
 const httpMocks = require('node-mocks-http');
+const jwt = require('jsonwebtoken');
 const moment = require('moment');
 const bcrypt = require('bcryptjs');
 const app = require('../../src/app');
@@ -50,6 +51,7 @@ describe('Auth routes', () => {
         access: { token: expect.anything(), expires: expect.anything() },
         refresh: { token: expect.anything(), expires: expect.anything() }
       });
+      expect(jwt.decode(res.body.tokens.access.token, { complete: true }).header.alg).toBe('HS256');
     });
 
     test('should return 400 error if email is invalid', async () => {
@@ -104,6 +106,27 @@ describe('Auth routes', () => {
         access: { token: expect.anything(), expires: expect.anything() },
         refresh: { token: expect.anything(), expires: expect.anything() }
       });
+    });
+
+    test('should return 200 and login user if email casing is different', async () => {
+      await insertUsers([userOne]);
+      const loginCredentials = {
+        email: userOne.email.toUpperCase(),
+        password: userOne.password
+      };
+
+      const res = await request(app).post('/v1/auth/login').send(loginCredentials).expect(httpStatus.OK);
+
+      expect(res.body.user.email).toBe(userOne.email);
+    });
+
+    test('should return 400 error if email is invalid', async () => {
+      const loginCredentials = {
+        email: 'not-an-email',
+        password: userOne.password
+      };
+
+      await request(app).post('/v1/auth/login').send(loginCredentials).expect(httpStatus.BAD_REQUEST);
     });
 
     test('should return 401 error if there are no users with that email', async () => {
@@ -218,11 +241,34 @@ describe('Auth routes', () => {
 
     test('should return 401 error if refresh token is expired', async () => {
       await insertUsers([userOne]);
-      const expires = moment().subtract(1, 'minutes');
-      const refreshToken = tokenService.generateToken(userOne._id, expires);
+      const expires = moment().subtract(2, 'days');
+      const refreshToken = tokenService.generateToken(userOne._id, expires, tokenTypes.REFRESH);
       await tokenService.saveToken(refreshToken, userOne._id, expires, tokenTypes.REFRESH);
 
       await request(app).post('/v1/auth/refresh-tokens').send({ refreshToken }).expect(httpStatus.UNAUTHORIZED);
+    });
+
+    test('should return 401 error if stored refresh token is expired', async () => {
+      await insertUsers([userOne]);
+      const tokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
+      const storedExpires = moment().subtract(2, 'days');
+      const refreshToken = tokenService.generateToken(userOne._id, tokenExpires, tokenTypes.REFRESH);
+      await tokenService.saveToken(refreshToken, userOne._id, storedExpires, tokenTypes.REFRESH);
+
+      await request(app).post('/v1/auth/refresh-tokens').send({ refreshToken }).expect(httpStatus.UNAUTHORIZED);
+    });
+
+    test('should return 401 error if refresh token payload type is invalid', async () => {
+      await insertUsers([userOne]);
+      const expires = moment().add(config.jwt.refreshExpirationDays, 'days');
+      const refreshToken = tokenService.generateToken(userOne._id, expires, tokenTypes.ACCESS);
+      await tokenService.saveToken(refreshToken, userOne._id, expires, tokenTypes.REFRESH);
+
+      await request(app).post('/v1/auth/refresh-tokens').send({ refreshToken }).expect(httpStatus.UNAUTHORIZED);
+    });
+
+    test('should return 400 error if refresh token is malformed', async () => {
+      await request(app).post('/v1/auth/refresh-tokens').send({ refreshToken: 'not-a-jwt' }).expect(httpStatus.BAD_REQUEST);
     });
 
     test('should return 401 error if user is not found', async () => {
@@ -304,7 +350,7 @@ describe('Auth routes', () => {
 
     test('should return 401 if reset password token is expired', async () => {
       await insertUsers([userOne]);
-      const expires = moment().subtract(1, 'minutes');
+      const expires = moment().subtract(2, 'days');
       const resetPasswordToken = tokenService.generateToken(userOne._id, expires, tokenTypes.RESET_PASSWORD);
       await tokenService.saveToken(resetPasswordToken, userOne._id, expires, tokenTypes.RESET_PASSWORD);
 
@@ -381,13 +427,23 @@ describe('Auth routes', () => {
 
       await request(app).post('/v1/auth/send-verification-email').send().expect(httpStatus.UNAUTHORIZED);
     });
+
+    test('should return 400 error if request body is not empty', async () => {
+      await insertUsers([userOne]);
+
+      await request(app)
+        .post('/v1/auth/send-verification-email')
+        .set('Authorization', `Bearer ${userOneAccessToken}`)
+        .send({ unexpected: true })
+        .expect(httpStatus.BAD_REQUEST);
+    });
   });
 
   describe('POST /v1/auth/verify-email', () => {
     test('should return 204 and verify the email', async () => {
       await insertUsers([userOne]);
       const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');
-      const verifyEmailToken = tokenService.generateToken(userOne._id, expires);
+      const verifyEmailToken = tokenService.generateToken(userOne._id, expires, tokenTypes.VERIFY_EMAIL);
       await tokenService.saveToken(verifyEmailToken, userOne._id, expires, tokenTypes.VERIFY_EMAIL);
 
       await request(app)
@@ -416,7 +472,7 @@ describe('Auth routes', () => {
     test('should return 401 if verify email token is blacklisted', async () => {
       await insertUsers([userOne]);
       const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');
-      const verifyEmailToken = tokenService.generateToken(userOne._id, expires);
+      const verifyEmailToken = tokenService.generateToken(userOne._id, expires, tokenTypes.VERIFY_EMAIL);
       await tokenService.saveToken(verifyEmailToken, userOne._id, expires, tokenTypes.VERIFY_EMAIL, true);
 
       await request(app)
@@ -428,8 +484,8 @@ describe('Auth routes', () => {
 
     test('should return 401 if verify email token is expired', async () => {
       await insertUsers([userOne]);
-      const expires = moment().subtract(1, 'minutes');
-      const verifyEmailToken = tokenService.generateToken(userOne._id, expires);
+      const expires = moment().subtract(2, 'days');
+      const verifyEmailToken = tokenService.generateToken(userOne._id, expires, tokenTypes.VERIFY_EMAIL);
       await tokenService.saveToken(verifyEmailToken, userOne._id, expires, tokenTypes.VERIFY_EMAIL);
 
       await request(app)
@@ -441,7 +497,7 @@ describe('Auth routes', () => {
 
     test('should return 401 if user is not found', async () => {
       const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');
-      const verifyEmailToken = tokenService.generateToken(userOne._id, expires);
+      const verifyEmailToken = tokenService.generateToken(userOne._id, expires, tokenTypes.VERIFY_EMAIL);
       await tokenService.saveToken(verifyEmailToken, userOne._id, expires, tokenTypes.VERIFY_EMAIL);
 
       await request(app)

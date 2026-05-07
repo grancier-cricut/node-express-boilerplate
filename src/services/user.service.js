@@ -2,16 +2,23 @@ const { status: httpStatus } = require('http-status');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 
+const normalizeEmail = (email) => email.trim().toLowerCase();
+
 /**
  * Create a user
  * @param {Object} userBody
  * @returns {Promise<User>}
  */
 const createUser = async (userBody) => {
-  if (await User.isEmailTaken(userBody.email)) {
+  const normalizedUserBody = {
+    ...userBody,
+    email: normalizeEmail(userBody.email)
+  };
+
+  if (await User.isEmailTaken(normalizedUserBody.email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
-  return User.create(userBody);
+  return User.create(normalizedUserBody);
 };
 
 /**
@@ -43,7 +50,7 @@ const getUserById = async (id) => {
  * @returns {Promise<User>}
  */
 const getUserByEmail = async (email) => {
-  return User.findOne({ email });
+  return User.findOne({ email: normalizeEmail(email) });
 };
 
 /**
@@ -57,10 +64,14 @@ const updateUserById = async (userId, updateBody) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
-  if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
+  const normalizedUpdateBody = { ...updateBody };
+  if (normalizedUpdateBody.email) {
+    normalizedUpdateBody.email = normalizeEmail(normalizedUpdateBody.email);
+  }
+  if (normalizedUpdateBody.email && (await User.isEmailTaken(normalizedUpdateBody.email, userId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
-  Object.assign(user, updateBody);
+  Object.assign(user, normalizedUpdateBody);
   await user.save();
   return user;
 };

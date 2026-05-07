@@ -1,9 +1,21 @@
 const { status: httpStatus } = require('http-status');
+const bcrypt = require('bcryptjs');
+const config = require('../config/config');
+const logger = require('../config/logger');
 const tokenService = require('./token.service');
 const userService = require('./user.service');
 const Token = require('../models/token.model');
 const ApiError = require('../utils/ApiError');
 const { tokenTypes } = require('../config/tokens');
+
+// Keep failed logins on the same bcrypt path whether or not the email exists.
+const DUMMY_PASSWORD_HASH = '$2b$08$xtC4iNnM7a2UJ5j6PcJV/.COrgvhLbdcXIINjNRXXvSZUaOSOeh82';
+
+const logAuthError = (context, error) => {
+  if (config.env !== 'test') {
+    logger.error('%s: %s', context, error.stack || error.message || error);
+  }
+};
 
 /**
  * Login with username and password
@@ -12,8 +24,12 @@ const { tokenTypes } = require('../config/tokens');
  * @returns {Promise<User>}
  */
 const loginUserWithEmailAndPassword = async (email, password) => {
-  const user = await userService.getUserByEmail(email);
-  if (!user || !(await user.isPasswordMatch(password))) {
+  const normalizedEmail = email.toLowerCase();
+  const user = await userService.getUserByEmail(normalizedEmail);
+  const passwordHash = user ? user.password : DUMMY_PASSWORD_HASH;
+  const isPasswordMatch = await bcrypt.compare(password, passwordHash);
+
+  if (!user || !isPasswordMatch) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
   }
   return user;
@@ -44,10 +60,11 @@ const refreshAuth = async (refreshToken) => {
     if (!user) {
       throw new Error();
     }
+    // Rotate refresh tokens so a token cannot be replayed after it has been used.
     await refreshTokenDoc.deleteOne();
     return tokenService.generateAuthTokens(user);
   } catch (error) {
-    console.error(error);
+    logAuthError('Refresh token authentication failed', error);
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
@@ -68,7 +85,7 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
     await userService.updateUserById(user.id, { password: newPassword });
     await Token.deleteMany({ user: user.id, type: tokenTypes.RESET_PASSWORD });
   } catch (error) {
-    console.error(error);
+    logAuthError('Password reset failed', error);
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Password reset failed');
   }
 };
@@ -88,7 +105,7 @@ const verifyEmail = async (verifyEmailToken) => {
     await Token.deleteMany({ user: user.id, type: tokenTypes.VERIFY_EMAIL });
     await userService.updateUserById(user.id, { isEmailVerified: true });
   } catch (error) {
-    console.error(error);
+    logAuthError('Email verification failed', error);
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Email verification failed');
   }
 };

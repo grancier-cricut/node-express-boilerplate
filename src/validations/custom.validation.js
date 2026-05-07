@@ -15,7 +15,15 @@ const password = (value, helpers) => {
   return value;
 };
 
+const jwtToken = (value, helpers) => {
+  if (!/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(value)) {
+    return helpers.message('"{{#label}}" must be a valid token');
+  }
+  return value;
+};
+
 module.exports = {
   objectId,
-  password
+  password,
+  jwtToken
 };

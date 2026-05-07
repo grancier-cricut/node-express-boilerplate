@@ -39,6 +39,7 @@ const paginate = (schema) => {
 
     if (options.populate) {
       options.populate.split(',').forEach((populateOption) => {
+        // Convert dot notation into Mongoose's nested populate object shape.
         docsPromise = docsPromise.populate(
           populateOption
             .split('.')

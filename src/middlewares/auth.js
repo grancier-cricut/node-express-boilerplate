@@ -10,9 +10,11 @@ const verifyCallback = (req, resolve, reject, requiredRights) => async (err, use
   req.user = user;
 
   if (requiredRights.length) {
-    const userRights = roleRights.get(user.role);
+    const userRights = roleRights.get(user.role) || [];
     const hasRequiredRights = requiredRights.every((requiredRight) => userRights.includes(requiredRight));
-    if (!hasRequiredRights && req.params.userId !== user.id) {
+    // Routes with :userId allow self-service even when the role lacks the required admin right.
+    const isSameUser = req.params.userId && req.params.userId === user._id.toString();
+    if (!hasRequiredRights && !isSameUser) {
       return reject(new ApiError(httpStatus.FORBIDDEN, 'Forbidden'));
     }
   }

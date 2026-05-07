@@ -2,6 +2,7 @@ const morgan = require('morgan');
 const config = require('./config');
 const logger = require('./logger');
 
+// errorHandler writes here so failed request logs include the response message.
 morgan.token('message', (req, res) => res.locals.errorMessage || '');
 
 const getIpFormat = () => (config.env === 'production' ? ':remote-addr - ' : '');

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { status: httpStatus } = require('http-status');
+const { default: httpStatus } = require('http-status');
 const httpMocks = require('node-mocks-http');
 const { errorConverter, errorHandler } = require('../../../src/middlewares/error');
 const ApiError = require('../../../src/utils/ApiError');
@@ -28,6 +28,23 @@ describe('Error middlewares', () => {
       expect(next).toHaveBeenCalledWith(
         expect.objectContaining({
           statusCode: error.statusCode,
+          message: error.message,
+          isOperational: false
+        })
+      );
+    });
+
+    test('should preserve non-400 error status codes', () => {
+      const error = new Error('Any error');
+      error.statusCode = httpStatus.NOT_FOUND;
+      const next = jest.fn();
+
+      errorConverter(error, httpMocks.createRequest(), httpMocks.createResponse(), next);
+
+      expect(next).toHaveBeenCalledWith(expect.any(ApiError));
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: httpStatus.NOT_FOUND,
           message: error.message,
           isOperational: false
         })

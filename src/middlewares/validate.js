@@ -19,6 +19,7 @@ const validate = (schema) => (req, res, next) => {
   }
   Object.keys(value).forEach((key) => {
     if (key === 'query') {
+      // Express 5 exposes req.query through an accessor, so replace it with the validated value.
       Object.defineProperty(req, 'query', {
         value: value.query,
         writable: false,

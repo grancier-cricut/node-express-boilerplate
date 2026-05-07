@@ -9,6 +9,7 @@ const deleteAtPath = (obj, path, index) => {
     delete obj[path[index]];
     return;
   }
+  // Private schema paths may be nested, so walk the serialized object path by path.
   deleteAtPath(obj[path[index]], path, index + 1);
 };
 

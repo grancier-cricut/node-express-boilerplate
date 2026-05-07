@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
 const { roles } = require('../config/roles');
 
+const normalizeEmail = (email) => email.trim().toLowerCase();
+
 const userSchema = mongoose.Schema(
   {
     name: {
@@ -61,7 +63,7 @@ userSchema.plugin(paginate);
  * @returns {Promise<boolean>}
  */
 userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
-  const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
+  const user = await this.findOne({ email: normalizeEmail(email), _id: { $ne: excludeUserId } });
   return !!user;
 };
 
@@ -75,6 +77,7 @@ userSchema.methods.isPasswordMatch = async function (password) {
   return bcrypt.compare(password, user.password);
 };
 
+// Keep the next callback guard because newer Mongoose versions do not always pass it to async hooks.
 userSchema.pre('save', async function (next) {
   const user = this;
 
